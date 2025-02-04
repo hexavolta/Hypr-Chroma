@@ -65,6 +65,46 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle)
     }
 
     g_Callbacks = {};
+
+
+    addDeprecatedEventListeners();
+
+    HyprlandAPI::addConfigKeyword(
+        handle, "chromakey_background",
+        [](const char* cmd, const char* val) -> Hyprlang::CParseResult {
+            // Parse val as "r,g,b" into 3 GLfloats
+            std::vector<std::string> result;
+            std::stringstream ss (val);
+            std::string component;
+
+            getline(ss, component, ',');
+            GLfloat r = std::stof(component);
+            getline(ss, component, ',');
+            GLfloat g = std::stof(component);
+            getline(ss, component, ',');
+            GLfloat b = std::stof(component);
+
+            g_WindowInverter.SetBackground(r, g, b);
+
+            return Hyprlang::CParseResult(); // return a default CParseResult
+        },
+        { .allowFlags = false }
+    );
+
+    g_Callbacks.push_back(HyprlandAPI::registerCallbackDynamic(
+        PHANDLE, "render",
+        [&](void* self, SCallbackInfo&, std::any data) {
+            std::lock_guard<std::mutex> lock(g_InverterMutex);
+            eRenderStage renderStage = std::any_cast<eRenderStage>(data);
+
+            if (renderStage == eRenderStage::RENDER_PRE_WINDOW)
+                g_WindowInverter.OnRenderWindowPre();
+            if (renderStage == eRenderStage::RENDER_POST_WINDOW)
+                g_WindowInverter.OnRenderWindowPost();
+        }
+    ));
+
+
     g_Callbacks.push_back(HyprlandAPI::registerCallbackDynamic(
         PHANDLE, "configReloaded",
         [&](void* self, SCallbackInfo&, std::any data) {
@@ -98,34 +138,55 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle)
             return std::optional<SFunctionMatch>();
     };
 
-    static const auto pRenderTexture = findFunction("CHyprOpenGLImpl", "renderTexture");
-    if (!pRenderTexture) throw std::runtime_error("Failed to find CHyprOpenGLImpl::renderTexture");
-    g_renderTexture = HyprlandAPI::createFunctionHook(handle, pRenderTexture->address, (void*)&hkRenderTexture);
-    g_renderTexture->hook();
 
-    static const auto pRenderTextureWithBlur = findFunction("CHyprOpenGLImpl", "renderTextureWithBlur");
-    if (!pRenderTextureWithBlur) throw std::runtime_error("Failed to find CHyprOpenGLImpl::renderTextureWithBlur");
-    g_renderTextureWithBlur = HyprlandAPI::createFunctionHook(handle, pRenderTextureWithBlur->address, (void*)&hkRenderTextureWithBlur);
-    g_renderTextureWithBlur->hook();
-
-    HyprlandAPI::addDispatcherV2(PHANDLE, "invertwindow", [&](std::string args) {
+    HyprlandAPI::addDispatcher(PHANDLE, "togglewindowchromakey", [&](std::string args) {
         std::lock_guard<std::mutex> lock(g_InverterMutex);
         g_WindowInverter.ToggleInvert(g_pCompositor->getWindowByRegex(args));
         return SDispatchResult{};
     });
-    HyprlandAPI::addDispatcherV2(PHANDLE, "invertactivewindow", [&](std::string args) {
+
+    HyprlandAPI::addDispatcher(PHANDLE, "togglechromakey", [&](std::string args) {
+
         std::lock_guard<std::mutex> lock(g_InverterMutex);
         g_WindowInverter.ToggleInvert(g_pCompositor->m_pLastWindow.lock());
         return SDispatchResult{};
     });
 
     return {
-        "Hypr-DarkWindow",
-        "Allows you to set dark mode for only specific Windows",
-        "micha4w",
-        "3.0.0"
+
+        "hyprchroma",
+        "Applies ChromaKey algorithm to windows for transparency effect",
+        "alexhulbert",
+        "1.0.0"
     };
 }
+
+// TODO remove deprecated
+inline static bool g_DidNotify = false;
+Hyprlang::CParseResult onInvertKeyword(const char* COMMAND, const char* VALUE)
+{
+    if (!g_DidNotify) {
+        g_DidNotify = true;
+        HyprlandAPI::addNotification(
+            PHANDLE,
+            "[Hypr-DarkWindow] The darkwindow_invert keyword was removed in favor of windowrulev2s please check the GitHub for more info.",
+            { 0xFF'00'00'00 },
+            10000
+        );
+    }
+    return {};
+}
+
+// TODO remove deprecated
+static void addDeprecatedEventListeners()
+{
+    HyprlandAPI::addConfigKeyword(
+        PHANDLE, "chromakey_enable",
+        onInvertKeyword,
+        { .allowFlags = false }
+    );
+}
+
 
 APICALL EXPORT void PLUGIN_EXIT()
 {
@@ -138,3 +199,4 @@ APICALL EXPORT std::string PLUGIN_API_VERSION()
 {
     return HYPRLAND_API_VERSION;
 }
+

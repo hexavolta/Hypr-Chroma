@@ -32,6 +32,11 @@ struct ShaderHolder
     CShader EXT;
     GLint EXT_Invert;
 
+    // Holds the background color
+    GLint BKGA;
+    GLint BKGX;
+    GLint BKGE;
+
     void Init();
     void Destroy();
 

@@ -1,44 +1,24 @@
-# Hypr-DarkWindow
-Hyprland plugin that adds possibility to invert the color of specific windows.
+# Hyprchroma
 
-![preview](./res/preview.png)
+![2024-10-18-000536_hyprshot](https://github.com/user-attachments/assets/d47d78e7-5ddd-4637-83d4-6a8a7be2e0ce)
+
+Hyprchroma is a Hyprland plugin that applies a chromakey effect for global window background transparency without affecting readability
 
 ## Configuration
-Adds 2 Dispatches `invertwindow WINDOW` and `invertactivewindow`.
-
-Or you can use windowrulev2 lines:
 ```conf
 # hyprland.conf
-windowrulev2 = plugin:invertwindow,class:(pb170.exe)
-windowrulev2 = plugin:invertwindow,fullscreen:1
+windowrulev2 = plugin:chromakey,fullscreen:0
+chromakey_background = 7,8,17
 ```
 
-> [!WARNING]  
-> The following Config keyword was removed, please switch to the new windowrule version.
-
-```conf
-# hyprland.conf
-darkwindow_invert = class:(pb170.exe)
-darkwindow_invert = fullscreen:1
-```
+Also adds 2 Dispatches `togglewindowchromakey WINDOW` and `togglechromakey` (for the active window)
 
 ## Installation
 
 ### Hyprland >= v0.36.0
 We now support Nix, wooo!
 
-You should already have a fully working home-manager setup before adding this plugin.
-```nix
-#flake.nix
-inputs = {
-    home-manager = { ... };
-    hyprland = { ... };
-    ...
-    hypr-darkwindow = {
-      url = "github:micha4w/Hypr-DarkWindow/tags/v0.36.0";
-      inputs.hyprland.follows = "hyprland";
-    };
-};
+### Hyprpm
 
 outputs = {
   home-manager,
@@ -62,16 +42,11 @@ outputs = {
 ### Hyprland >= v0.34.0
 Install using `hyprpm`
 ```sh
-hyprpm add https://github.com/micha4w/Hypr-DarkWindow
-hyprpm enable Hypr-DarkWindow
+hyprpm add https://github.com/alexhulbert/Hyprchroma
+hyprpm enable hyprchroma
 hyprpm reload
 ```
 
-### Hyprland >= v0.28.0
-Installable using [Hyprload](https://github.com/duckonaut/hyprload)
-```toml
-# hyprload.toml
-plugins = [
-  "micha4w/Hypr-DarkWindow",
-]
-```
+### Nix
+
+For nix instructions, refer to the parent repository.

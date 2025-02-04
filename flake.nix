@@ -28,13 +28,13 @@
           ];
         };
 
-        nativeBuildInputs = with pkgs; [ pkg-config ];
-        buildInputs = [hyprlandPackage.dev] ++ hyprlandPackage.buildInputs;
+            nativeBuildInputs = with pkgs; [ pkg-config ];
+            buildInputs = [ hyprlandPackage.dev ] ++ hyprlandPackage.buildInputs;
 
-        installPhase = ''
-          mkdir -p $out/lib
-          install ./out/hypr-darkwindow.so $out/lib/libHypr-DarkWindow.so
-        '';
+            installPhase = ''
+              mkdir -p $out/lib
+              install ./out/hyprchroma.so $out/lib/libHypr-DarkWindow.so
+            '';
 
         meta = with pkgs.lib; {
           homepage = "https://github.com/micha4w/Hypr-DarkWindow";
@@ -44,19 +44,19 @@
         };
       };
 
-      default = Hypr-DarkWindow;
-    });
+          default = Hypr-DarkWindow;
+        });
 
-    devShells = forHyprlandSystems (system: pkgs: {
-      default = pkgs.mkShell {
-        name = "Hypr-DarkWindow";
+      devShells = forHyprlandSystems (system: pkgs: {
+        default = pkgs.mkShell {
+          name = "Hypr-DarkWindow";
 
-        nativeBuildInputs = with pkgs; [
-          clang-tools_16
-        ];
+          nativeBuildInputs = with pkgs; [
+            clang-tools_16
+          ];
 
-        inputsFrom = [self.packages.${system}.Hypr-DarkWindow];
-      };
-    });
-  };
+          inputsFrom = [ self.packages.${system}.Hypr-DarkWindow ];
+        };
+      });
+    };
 }

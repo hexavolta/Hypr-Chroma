@@ -31,6 +31,7 @@ void ShaderHolder::Init()
     RGBA.tint                 = glGetUniformLocation(prog, "tint");
     RGBA.useAlphaMatte        = glGetUniformLocation(prog, "useAlphaMatte");
     RGBA_Invert               = glGetUniformLocation(prog, "doInvert"); 
+    BKGA = glGetUniformLocation(prog, "bkg");
 
     prog                      = CreateProgram(TEXVERTSRC, TEXFRAGSRCRGBX_DARK);
     RGBX.program              = prog;
@@ -49,6 +50,7 @@ void ShaderHolder::Init()
     RGBX.applyTint            = glGetUniformLocation(prog, "applyTint");
     RGBX.tint                 = glGetUniformLocation(prog, "tint");
     RGBX_Invert               = glGetUniformLocation(prog, "doInvert"); 
+    BKGX = glGetUniformLocation(prog, "bkg");
 
     prog                     = CreateProgram(TEXVERTSRC, TEXFRAGSRCEXT_DARK);
     EXT.program              = prog;
@@ -67,6 +69,7 @@ void ShaderHolder::Init()
     EXT.roundingPower        = glGetUniformLocation(prog, "roundingPower");
     EXT.tint                 = glGetUniformLocation(prog, "tint");
     EXT_Invert               = glGetUniformLocation(prog, "doInvert"); 
+    BKGE = glGetUniformLocation(prog, "bkg");
 
     g_pHyprRenderer->unsetEGL();
 }

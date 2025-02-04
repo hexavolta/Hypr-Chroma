@@ -8,14 +8,35 @@
 
 inline static const std::string DARK_MODE_FUNC = R"glsl(
 uniform bool doInvert;
+uniform vec3 bkg;
 
 void invert(inout vec4 color) {
     if (doInvert) {
-        // Invert Colors
-        color.rgb = vec3(1.) - vec3(.88, .9, .92) * color.rgb;
+        // Original shader by ikz87
 
-        // Invert Hue
-        color.rgb = dot(vec3(0.26312, 0.5283, 0.10488), color.rgb) * 2.0 - color.rgb;
+        // Apply opacity changes to pixels similar to one color
+        // vec3 color_rgb = vec3(0,0,255); // Color to replace, in rgb format
+        float similarity = 0.1; // How many similar colors should be affected.
+
+        float amount = 1.4; // How much similar colors should be changed.
+        float target_opacity = 0.83;
+        // Change any of the above values to get the result you want
+
+        // Set values to a 0 - 1 range
+        vec3 chroma = vec3(bkg[0]/255.0, bkg[1]/255.0, bkg[2]/255.0);
+
+        if (color.x >=chroma.x - similarity && color.x <=chroma.x + similarity &&
+                color.y >=chroma.y - similarity && color.y <=chroma.y + similarity &&
+                color.z >=chroma.z - similarity && color.z <=chroma.z + similarity &&
+                color.w >= 0.99)
+        {
+            // Calculate error between matched pixel and color_rgb values
+                vec3 error = vec3(abs(chroma.x - color.x), abs(chroma.y - color.y), abs(chroma.z - color.z));
+            float avg_error = (error.x + error.y + error.z) / 3.0;
+                color.w = target_opacity + (1.0 - target_opacity)*avg_error*amount/similarity;
+
+            // color.rgba = vec4(0, 0, 1, 0.5);
+        }
     }
 }
 )glsl";
@@ -51,7 +72,7 @@ void main() {
     if (discardAlpha == 1 && pixColor[3] <= discardAlphaValue)
         discard;
 
-    if (applyTint == 1) {
+    if (applyTint == 2) {
 	    pixColor[0] = pixColor[0] * tint[0];
 	    pixColor[1] = pixColor[1] * tint[1];
 	    pixColor[2] = pixColor[2] * tint[2];
@@ -94,10 +115,12 @@ void main() {
 
     vec4 pixColor = vec4(texture2D(tex, v_texcoord).rgb, 1.0);
 
-    if (applyTint == 1) {
-	pixColor[0] = pixColor[0] * tint[0];
-	pixColor[1] = pixColor[1] * tint[1];
-	pixColor[2] = pixColor[2] * tint[2];
+
+    if (applyTint == 2) {
+        pixColor[0] = pixColor[0] * tint[0];
+        pixColor[1] = pixColor[1] * tint[1];
+        pixColor[2] = pixColor[2] * tint[2];
+
     }
 
     invert(pixColor);
@@ -139,10 +162,11 @@ void main() {
     if (discardOpaque == 1 && pixColor[3] * alpha == 1.0)
 	discard;
 
-    if (applyTint == 1) {
-	pixColor[0] = pixColor[0] * tint[0];
-	pixColor[1] = pixColor[1] * tint[1];
-	pixColor[2] = pixColor[2] * tint[2];
+
+    if (applyTint == 2) {
+        pixColor[0] = pixColor[0] * tint[0];
+        pixColor[1] = pixColor[1] * tint[1];
+        pixColor[2] = pixColor[2] * tint[2];
     }
 
     invert(pixColor);
